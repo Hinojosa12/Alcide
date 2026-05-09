@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const crypto = require('crypto')
+const db = require('../database')
 
 // ── CREDENCIALES MMG (UAT) ─────────────────────────────
 const SECRET_KEY = '5//tT92n2xB8fab+YXkEwYRLODo3sMkh3imGOpAB1lqcz8JcdZHxVLDanBHYpl5A'
@@ -64,6 +65,30 @@ router.post('/generate-checkout', (req, res) => {
   } catch (err) {
     console.error('MMG Error:', err)
     res.status(500).json({ message: 'Error generating MMG checkout' })
+  }
+})
+
+// Guardar orden después del pago
+router.post('/save-order', (req, res) => {
+  try {
+    const { user_id, total, items, merchantTransactionId } = req.body
+
+    const order = db.prepare(
+      'INSERT INTO orders (user_id, total, status) VALUES (?, ?, ?)'
+    ).run(user_id || null, total, 'paid')
+
+    const insertItem = db.prepare(
+      'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)'
+    )
+
+    for (const item of items) {
+      insertItem.run(order.lastInsertRowid, item.id, item.quantity, item.price)
+    }
+
+    res.json({ message: 'Order saved ✅', orderId: order.lastInsertRowid })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Error saving order' })
   }
 })
 
