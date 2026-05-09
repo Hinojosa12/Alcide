@@ -19,7 +19,7 @@ router.post('/register', (req, res) => {
   ).run(name, email, hashed)
 
   const token = jwt.sign({ id: result.lastInsertRowid, email }, SECRET, { expiresIn: '7d' })
-  res.json({ token, name, email })
+  res.json({ token, id: result.lastInsertRowid, name, email })
 })
 
 // Login
@@ -33,7 +33,7 @@ router.post('/login', (req, res) => {
   if (!valid) return res.status(400).json({ message: 'Contraseña incorrecta' })
 
   const token = jwt.sign({ id: user.id, email }, SECRET, { expiresIn: '7d' })
-  res.json({ token, name: user.name, email: user.email })
+  res.json({ token, id: user.id, name: user.name, email: user.email })
 })
 
 module.exports = router
