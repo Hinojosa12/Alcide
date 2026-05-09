@@ -1,33 +1,41 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
-
-const allProducts = [
-  { id: 1, name: "Coach Crossbody Bags", price: 6500, image: "https://site.carib-zoom.com/wp-content/uploads/2026/04/488-300x300.png", category: "Accessories", brand: "D'Jango" },
-  { id: 2, name: "Black Horse Vital Honey Packs", price: 1000, image: "https://site.carib-zoom.com/wp-content/uploads/2026/04/72-300x300.png", category: "Male Wellness", brand: "Health" },
-  { id: 3, name: "Sokany Coffee Maker", price: 12000, image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/Home-Essentials-Stock-3-2-300x300.png", category: "Appliances", brand: "Home Essentials" },
-  { id: 4, name: "Sokany 3-1 Breakfast Maker", price: 15000, image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/437-300x300.png", category: "Appliances", brand: "Home Essentials" },
-  { id: 5, name: "Guess 3pcs Handbags", price: 0, image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/283-300x300.png", category: "Accessories", brand: "Guess" },
-  { id: 6, name: "7pcs Air-Tight Storage Containers", price: 8000, image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/470-1-300x300.png", category: "Kitchen", brand: "Home Essentials" },
-  { id: 7, name: "Baby Feeding Chair", price: 25000, image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/485-300x300.webp", category: "Baby & Kids", brand: "Destiny's Clothing" },
-  { id: 8, name: "Baby Bedside Dell", price: 5000, image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/433-1-300x300.webp", category: "Baby & Kids", brand: "Destiny's Clothing" },
-  { id: 9, name: "Portable Satin Baby Bed", price: 4500, image: "https://site.carib-zoom.com/wp-content/uploads/2026/05/163-300x300.png", category: "Baby & Kids", brand: "Destiny's Clothing" },
-  { id: 10, name: "Mielle Rosemary Mint Hair Care Set", price: 6000, image: "https://site.carib-zoom.com/wp-content/uploads/2026/05/486-300x300.png", category: "Beauty", brand: "Pieces Plus Sized" },
-  { id: 11, name: "Kids Learning Foam Clock", price: 1000, image: "https://site.carib-zoom.com/wp-content/uploads/2026/05/355-300x300.png", category: "Stationery", brand: "The Office Depot" },
-  { id: 12, name: "Batana Oil Full Hair Care Set", price: 6500, image: "https://site.carib-zoom.com/wp-content/uploads/2026/04/103-300x300.png", category: "Beauty", brand: "Pieces Plus Sized" },
-]
 
 const categories = ["All", "Accessories", "Appliances", "Baby & Kids", "Beauty", "Kitchen", "Male Wellness", "Stationery"]
 
 function Shop() {
+  const [products, setProducts] = useState([])
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [search, setSearch] = useState("")
+  const [loading, setLoading] = useState(true)
   const { addToCart } = useCart()
 
-  const filtered = allProducts.filter((p) => {
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/products`)
+      .then((res) => res.json())
+      .then((data) => {
+        setProducts(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error(err)
+        setLoading(false)
+      })
+  }, [])
+
+  const filtered = products.filter((p) => {
     const matchCategory = selectedCategory === "All" || p.category === selectedCategory
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase())
     return matchCategory && matchSearch
   })
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-400 text-lg">Loading products...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
@@ -75,11 +83,11 @@ function Shop() {
               {product.price > 0 && (
                 <p className="text-blue-600 font-bold">${product.price.toLocaleString()}</p>
               )}
-              <button 
-  onClick={() => addToCart(product)}
-  className="mt-3 w-full bg-blue-600 text-white text-sm py-2 rounded hover:bg-blue-700 transition">
-  Add to Cart
-</button>
+              <button
+                onClick={() => addToCart(product)}
+                className="mt-3 w-full bg-blue-600 text-white text-sm py-2 rounded hover:bg-blue-700 transition">
+                Add to Cart
+              </button>
             </div>
           </div>
         ))}
