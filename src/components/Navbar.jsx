@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 
 function Navbar() {
   const { cart } = useCart()
+  const { user, logout } = useAuth()
   const totalItems = cart.reduce((sum, p) => sum + p.quantity, 0)
 
   return (
@@ -22,6 +24,17 @@ function Navbar() {
       </ul>
       <div className="flex items-center gap-4 text-gray-600 text-sm">
         <span>📞 +(592) 613-7666</span>
+        {user ? (
+          <>
+            <span className="font-semibold text-blue-600">Hi, {user.name}</span>
+            <button onClick={logout} className="hover:text-red-500">Logout</button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="hover:text-blue-600">Login</Link>
+            <Link to="/register" className="hover:text-blue-600">Register</Link>
+          </>
+        )}
         <span className="cursor-pointer">❤️ Wishlist</span>
         <Link to="/cart" className="cursor-pointer relative">
           🛒 Cart
