@@ -25,7 +25,7 @@ function Checkout() {
     setError('')
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/mmg/generate-checkout`, {
+      const checkoutRes = await fetch(`${import.meta.env.VITE_API_URL}/api/mmg/generate-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -36,12 +36,22 @@ function Checkout() {
         })
       })
 
-      const data = await res.json()
+      const checkoutData = await checkoutRes.json()
+      if (!checkoutRes.ok) return setError(checkoutData.message)
 
-      if (!res.ok) return setError(data.message)
+      await fetch(`${import.meta.env.VITE_API_URL}/api/mmg/save-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user?.id || null,
+          total,
+          items: cart,
+          merchantTransactionId: checkoutData.merchantTransactionId
+        })
+      })
 
       clearCart()
-      window.location.href = data.checkoutUrl
+      window.location.href = checkoutData.checkoutUrl
 
     } catch (err) {
       setError('Error connecting to payment service')
@@ -65,56 +75,12 @@ function Checkout() {
         <h1 className="text-2xl font-bold mb-6 uppercase tracking-widest">Checkout</h1>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <form onSubmit={handleMMGPayment} className="flex flex-col gap-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            className="border border-gray-300 rounded px-4 py-2 text-sm outline-none"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            required
-            className="border border-gray-300 rounded px-4 py-2 text-sm outline-none"
-          />
-          <input
-            type="text"
-            name="phone"
-            placeholder="Phone Number"
-            value={form.phone}
-            onChange={handleChange}
-            required
-            className="border border-gray-300 rounded px-4 py-2 text-sm outline-none"
-          />
-          <input
-            type="text"
-            name="address"
-            placeholder="Address"
-            value={form.address}
-            onChange={handleChange}
-            required
-            className="border border-gray-300 rounded px-4 py-2 text-sm outline-none"
-          />
-          <input
-            type="text"
-            name="city"
-            placeholder="City"
-            value={form.city}
-            onChange={handleChange}
-            required
-            className="border border-gray-300 rounded px-4 py-2 text-sm outline-none"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-green-600 text-white py-3 rounded font-semibold hover:bg-green-700 transition mt-4 disabled:opacity-50"
-          >
+          <input type="text" name="name" placeholder="Full Name" value={form.name} onChange={handleChange} required className="border border-gray-300 rounded px-4 py-2 text-sm outline-none" />
+          <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required className="border border-gray-300 rounded px-4 py-2 text-sm outline-none" />
+          <input type="text" name="phone" placeholder="Phone Number" value={form.phone} onChange={handleChange} required className="border border-gray-300 rounded px-4 py-2 text-sm outline-none" />
+          <input type="text" name="address" placeholder="Address" value={form.address} onChange={handleChange} required className="border border-gray-300 rounded px-4 py-2 text-sm outline-none" />
+          <input type="text" name="city" placeholder="City" value={form.city} onChange={handleChange} required className="border border-gray-300 rounded px-4 py-2 text-sm outline-none" />
+          <button type="submit" disabled={loading} className="bg-green-600 text-white py-3 rounded font-semibold hover:bg-green-700 transition mt-4 disabled:opacity-50">
             {loading ? 'Redirecting to MMG...' : `Pay with MMG — $${total.toLocaleString()}`}
           </button>
         </form>

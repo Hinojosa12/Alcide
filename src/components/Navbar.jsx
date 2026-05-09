@@ -2,10 +2,13 @@ import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 
+const ADMIN_EMAIL = 'admin@caribzoom.com'
+
 function Navbar() {
   const { cart } = useCart()
   const { user, logout } = useAuth()
   const totalItems = cart.reduce((sum, p) => sum + p.quantity, 0)
+  const isAdmin = user?.email === ADMIN_EMAIL
 
   return (
     <nav className="bg-white shadow-md px-6 py-3 flex items-center justify-between">
@@ -21,6 +24,9 @@ function Navbar() {
         <li><Link to="/brands" className="hover:text-blue-600">Brands</Link></li>
         <li><Link to="/my-orders" className="hover:text-blue-600">My Orders</Link></li>
         <li><Link to="/about" className="hover:text-blue-600">About Us</Link></li>
+        {isAdmin && (
+          <li><Link to="/admin" className="text-red-600 hover:text-red-800 font-bold">Admin</Link></li>
+        )}
       </ul>
       <div className="flex items-center gap-4 text-gray-600 text-sm">
         <span>📞 +(592) 613-7666</span>
