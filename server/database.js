@@ -27,22 +27,24 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS slides (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     image TEXT NOT NULL, title TEXT, subtitle TEXT,
-    description TEXT, button_text TEXT, button_url TEXT, sort_order INTEGER DEFAULT 0
+    description TEXT, button_text TEXT, button_url TEXT,
+    elements TEXT DEFAULT NULL,
+    sort_order INTEGER DEFAULT 0
   );
   CREATE TABLE IF NOT EXISTS brand_banners (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     image TEXT NOT NULL, title TEXT, description TEXT,
     button_text TEXT, button_url TEXT,
-    whatsapp TEXT DEFAULT '', size TEXT DEFAULT 'square', sort_order INTEGER DEFAULT 0
+    whatsapp TEXT DEFAULT '',
+    elements TEXT DEFAULT NULL,
+    sort_order INTEGER DEFAULT 0
   );
   CREATE TABLE IF NOT EXISTS shop_brands (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     image TEXT NOT NULL, title TEXT, description TEXT,
     button_text TEXT, button_url TEXT,
     whatsapp TEXT DEFAULT '', size TEXT DEFAULT 'square',
-    text_x INTEGER DEFAULT 5,
-    text_y INTEGER DEFAULT 20,
-    text_color TEXT DEFAULT '#1a1a1a',
+    elements TEXT DEFAULT NULL,
     sort_order INTEGER DEFAULT 0
   );
   CREATE TABLE IF NOT EXISTS shop_banner (
@@ -54,11 +56,9 @@ db.exec(`
   );
   CREATE TABLE IF NOT EXISTS about_us (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    hero_subtitle TEXT DEFAULT 'Who We Are',
-    hero_title TEXT DEFAULT 'About Us',
+    hero_subtitle TEXT DEFAULT 'Who We Are', hero_title TEXT DEFAULT 'About Us',
     hero_description TEXT DEFAULT 'We are your ultimate destination for quality, convenience, and style.',
-    story_label TEXT DEFAULT 'Since 2019',
-    story_heading TEXT DEFAULT 'Our story is one of growth, creativity, and purpose.',
+    story_label TEXT DEFAULT 'Since 2019', story_heading TEXT DEFAULT 'Our story is one of growth, creativity, and purpose.',
     story_text TEXT DEFAULT 'Founded in March 2019, Carib-Zoom Inc began as a small social commerce venture.',
     story_image1 TEXT DEFAULT '', story_image2 TEXT DEFAULT '',
     mission_title TEXT DEFAULT 'Our Mission', mission_text TEXT DEFAULT '',
@@ -77,15 +77,16 @@ db.exec(`
   );
 `)
 
-// Migraciones seguras
-const bbCols = db.prepare("PRAGMA table_info(brand_banners)").all().map(c => c.name)
-if (!bbCols.includes('whatsapp')) db.prepare("ALTER TABLE brand_banners ADD COLUMN whatsapp TEXT DEFAULT ''").run()
-if (!bbCols.includes('size'))     db.prepare("ALTER TABLE brand_banners ADD COLUMN size TEXT DEFAULT 'square'").run()
-
-const sbCols = db.prepare("PRAGMA table_info(shop_brands)").all().map(c => c.name)
-if (!sbCols.includes('text_x'))     db.prepare("ALTER TABLE shop_brands ADD COLUMN text_x INTEGER DEFAULT 5").run()
-if (!sbCols.includes('text_y'))     db.prepare("ALTER TABLE shop_brands ADD COLUMN text_y INTEGER DEFAULT 20").run()
-if (!sbCols.includes('text_color')) db.prepare("ALTER TABLE shop_brands ADD COLUMN text_color TEXT DEFAULT '#1a1a1a'").run()
+// Safe migrations
+const addCol = (table, col, def) => {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name)
+  if (!cols.includes(col)) db.prepare(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`).run()
+}
+addCol('slides',       'elements',  'TEXT DEFAULT NULL')
+addCol('brand_banners','whatsapp',  "TEXT DEFAULT ''")
+addCol('brand_banners','elements',  'TEXT DEFAULT NULL')
+addCol('shop_brands',  'elements',  'TEXT DEFAULT NULL')
+addCol('shop_brands',  'size',      "TEXT DEFAULT 'square'")
 
 const aboutExists = db.prepare('SELECT id FROM about_us LIMIT 1').get()
 if (!aboutExists) db.prepare('INSERT INTO about_us DEFAULT VALUES').run()
