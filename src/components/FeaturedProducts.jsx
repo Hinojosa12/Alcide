@@ -1,92 +1,88 @@
-const products = [
-  {
-    id: 1,
-    name: "Coach Crossbody Bags",
-    price: "$6,500",
-    image: "https://site.carib-zoom.com/wp-content/uploads/2026/04/488-300x300.png",
-    category: "Accessories",
-  },
-  {
-    id: 2,
-    name: "Black Horse Vital Honey Packs",
-    price: "$1,000",
-    image: "https://site.carib-zoom.com/wp-content/uploads/2026/04/72-300x300.png",
-    category: "Male Wellness",
-  },
-  {
-    id: 3,
-    name: "Sokany Coffee Maker",
-    price: "$12,000",
-    image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/Home-Essentials-Stock-3-2-300x300.png",
-    category: "Appliances",
-  },
-  {
-    id: 4,
-    name: "Sokany 3-1 Breakfast Maker",
-    price: "$15,000",
-    image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/437-300x300.png",
-    category: "Appliances",
-  },
-  {
-    id: 5,
-    name: "Guess 3pcs Handbags",
-    price: "",
-    image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/283-300x300.png",
-    category: "Fashion & Accessories",
-  },
-  {
-    id: 6,
-    name: "7pcs Air-Tight Storage Containers",
-    price: "$8,000",
-    image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/470-1-300x300.png",
-    category: "Kitchen",
-  },
-  {
-    id: 7,
-    name: "Baby Feeding Chair",
-    price: "$25,000",
-    image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/485-300x300.webp",
-    category: "Parent & Baby Essentials",
-  },
-  {
-    id: 8,
-    name: "Baby Bedside Dell",
-    price: "$5,000",
-    image: "https://site.carib-zoom.com/wp-content/uploads/2025/10/433-1-300x300.webp",
-    category: "Parent & Baby Essentials",
-  },
-]
+import { useState, useEffect } from 'react'
+import { useCart } from '../context/CartContext'
+import { Heart, Search, ShoppingCart } from 'lucide-react'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Autoplay, Navigation } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/navigation'
 
 function FeaturedProducts() {
+  const [products, setProducts] = useState([])
+  const { addToCart } = useCart()
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/products`)
+      .then(res => res.json())
+      .then(data => setProducts(data))
+      .catch(() => {})
+  }, [])
+
   return (
     <section className="py-12 px-6 bg-gray-50">
       <h2 className="text-2xl font-bold text-center mb-8 uppercase tracking-widest">
         Featured Products
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <Swiper
+        modules={[Autoplay, Navigation]}
+        autoplay={{ delay: 4000, disableOnInteraction: false }}
+        speed={800}
+        navigation
+        loop
+        slidesPerView={4}
+        spaceBetween={20}
+        breakpoints={{
+          0: { slidesPerView: 1 },
+          640: { slidesPerView: 2 },
+          768: { slidesPerView: 3 },
+          1024: { slidesPerView: 4 },
+        }}
+      >
         {products.map((product) => (
-          <div
-            key={product.id}
-            className="bg-white rounded-lg shadow hover:shadow-md transition cursor-pointer overflow-hidden"
-          >
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <p className="text-xs text-gray-400 mb-1">{product.category}</p>
-              <h3 className="text-sm font-semibold text-gray-800 mb-2">{product.name}</h3>
-              {product.price && (
-                <p className="text-blue-600 font-bold">{product.price}</p>
-              )}
-              <button className="mt-3 w-full bg-blue-600 text-white text-sm py-2 rounded hover:bg-blue-700 transition">
-                Add to Cart
-              </button>
+          <SwiperSlide key={product.id}>
+            <div className="bg-white rounded-lg shadow hover:shadow-md transition overflow-hidden group">
+              <div className="relative overflow-hidden h-56">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-full object-contain transition-transform duration-1000 ease-in-out group-hover:scale-110"
+                />
+                <span className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
+                  HOT
+                </span>
+                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button className="bg-white rounded-full w-9 h-9 flex items-center justify-center shadow hover:bg-gray-100">
+                    <Heart size={16} className="text-gray-600" />
+                  </button>
+                  <button className="bg-white rounded-full w-9 h-9 flex items-center justify-center shadow hover:bg-gray-100">
+                    <Search size={16} className="text-gray-600" />
+                  </button>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 bg-blue-600 py-3 flex items-center justify-center gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                  <ShoppingCart size={16} className="text-white" />
+                  <button
+                    onClick={() => addToCart(product)}
+                    className="text-white text-sm font-bold uppercase tracking-widest"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+              <div className="p-4">
+                <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{product.category}</p>
+                <h3 className="text-sm font-semibold text-gray-800 mb-2">{product.name}</h3>
+                <div className="flex gap-1 mb-2">
+                  {[1,2,3,4,5].map(star => (
+                    <span key={star} className="text-gray-300 text-sm">★</span>
+                  ))}
+                </div>
+                {product.price > 0 && (
+                  <p className="text-gray-900 font-bold text-lg">${product.price.toLocaleString()}</p>
+                )}
+              </div>
             </div>
-          </div>
+          </SwiperSlide>
         ))}
-      </div>
+      </Swiper>
     </section>
   )
 }

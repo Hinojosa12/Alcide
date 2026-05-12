@@ -7,8 +7,12 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Admin from './pages/Admin'
 import MyOrders from './pages/MyOrders'
+import About from './pages/About'
+import FAQ from './pages/FAQ'
+import BrandsPage from './pages/BrandsPage'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import TopDeals from './components/TopDeals'
 
 function App() {
   return (
@@ -23,7 +27,11 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/my-orders" element={<MyOrders />} />
+        <Route path="/brands" element={<BrandsPage />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/faq" element={<FAQ />} />
       </Routes>
+      <TopDeals />
       <Footer />
     </BrowserRouter>
   )
