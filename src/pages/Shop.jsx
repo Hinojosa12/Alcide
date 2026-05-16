@@ -46,18 +46,18 @@ function SideSection({ title, children, defaultOpen = true }) {
 }
 
 export default function Shop() {
-  const [products, setProducts]             = useState([])
-  const [banner, setBanner]                 = useState(DEFAULT_BANNER)
+  const [products, setProducts]                 = useState([])
+  const [banner, setBanner]                     = useState(DEFAULT_BANNER)
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [search, setSearch]                 = useState('')
-  const [loading, setLoading]               = useState(true)
-  const [selectedBrands, setSelectedBrands] = useState([])
-  const [maxPrice, setMaxPrice]             = useState(40000)
-  const [priceMax, setPriceMax]             = useState(40000)
-  const [sortBy, setSortBy]                 = useState('default')
-  const [pageSize, setPageSize]             = useState(9)
-  const [currentPage, setCurrentPage]       = useState(1)
-  const [viewMode, setViewMode]             = useState('grid')
+  const [search, setSearch]                     = useState('')
+  const [loading, setLoading]                   = useState(true)
+  const [selectedBrands, setSelectedBrands]     = useState([])
+  const [maxPrice, setMaxPrice]                 = useState(40000)
+  const [priceMax, setPriceMax]                 = useState(40000)
+  const [sortBy, setSortBy]                     = useState('default')
+  const [pageSize, setPageSize]                 = useState(9)
+  const [currentPage, setCurrentPage]           = useState(1)
+  const [viewMode, setViewMode]                 = useState('grid')
   const { addToCart } = useCart()
 
   useEffect(() => {
@@ -69,7 +69,6 @@ export default function Shop() {
       const top = Math.max(...prods.map(p => p.price || 0), 40000)
       setMaxPrice(top)
       setPriceMax(top)
-      // Merge con defaults para que nunca falte bg_color u otro campo
       if (ban && ban.id) setBanner({ ...DEFAULT_BANNER, ...ban })
       setLoading(false)
     }).catch(() => setLoading(false))
@@ -107,16 +106,8 @@ export default function Shop() {
   )
 
   const bannerStyle = banner.image
-    ? {
-        minHeight: 220,
-        backgroundImage: `url(${banner.image})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }
-    : {
-        minHeight: 220,
-        background: '#2d8a6e',
-      }
+    ? { minHeight: 220, backgroundImage: `url(${banner.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : { minHeight: 220, background: '#2d8a6e' }
 
   return (
     <div className="max-w-screen-xl mx-auto px-16 py-8">
@@ -197,7 +188,9 @@ export default function Shop() {
             <div className="space-y-4">
               {featured.map(p => (
                 <div key={p.id} className="flex items-center gap-3">
-                  <img src={p.image} alt={p.name} className="w-16 h-16 object-cover flex-shrink-0 border border-gray-100" />
+                  <div className="w-16 h-16 flex-shrink-0 border border-gray-100 bg-gray-50 overflow-hidden">
+                    <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
+                  </div>
                   <div>
                     <p className="text-[13px] font-medium text-gray-700 leading-snug line-clamp-2">{p.name}</p>
                     {p.price > 0 && <p className="text-[13px] text-gray-700 font-semibold mt-0.5">${p.price.toLocaleString()}</p>}
@@ -213,7 +206,6 @@ export default function Shop() {
 
           {/* Banner dinámico */}
           <div className="w-full rounded overflow-hidden mb-6 relative flex items-center px-10 py-8 text-white" style={bannerStyle}>
-            {/* círculos decorativos */}
             <div className="absolute left-20 top-6  w-20 h-20 rounded-full bg-white/10 pointer-events-none" />
             <div className="absolute left-36 top-3  w-14 h-14 rounded-full bg-white/10 pointer-events-none" />
             <div className="absolute left-8  top-20 w-8  h-8  rounded-full bg-white/10 pointer-events-none" />
@@ -271,13 +263,21 @@ export default function Shop() {
             <div className="grid grid-cols-3 gap-5">
               {paginated.map(product => (
                 <div key={product.id} className="group border border-gray-100 bg-white hover:shadow-md transition overflow-hidden cursor-pointer">
-                  <div className="relative overflow-hidden">
-                    <img src={product.image} alt={product.name} className="w-full h-52 object-cover group-hover:scale-105 transition duration-300" />
-                    <button onClick={() => addToCart(product)}
+
+                  {/* Contenedor cuadrado — imagen completa + zoom al hover */}
+                  <div className="relative overflow-hidden bg-gray-50" style={{ aspectRatio: '1 / 1' }}>
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
+                    />
+                    <button
+                      onClick={() => addToCart(product)}
                       className="absolute bottom-0 left-0 right-0 bg-blue-600 text-white text-xs font-bold py-2.5 uppercase tracking-wider opacity-0 group-hover:opacity-100 translate-y-full group-hover:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2">
                       <ShoppingCart size={14} /> ADD TO CART
                     </button>
                   </div>
+
                   <div className="p-3">
                     <p className="text-[11px] text-gray-400 uppercase tracking-wide mb-1">{product.category}</p>
                     <h3 className="text-[14px] text-gray-800 leading-snug mb-1.5 line-clamp-2">{product.name}</h3>
@@ -291,7 +291,9 @@ export default function Shop() {
             <div className="flex flex-col gap-4">
               {paginated.map(product => (
                 <div key={product.id} className="flex gap-5 border border-gray-100 bg-white hover:shadow-md transition p-4">
-                  <img src={product.image} alt={product.name} className="w-28 h-28 object-cover flex-shrink-0" />
+                  <div className="w-28 h-28 flex-shrink-0 bg-gray-50 overflow-hidden">
+                    <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                  </div>
                   <div className="flex-1">
                     <p className="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">{product.category}</p>
                     <h3 className="text-[15px] font-semibold text-gray-800 mb-1">{product.name}</h3>
