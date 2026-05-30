@@ -20,6 +20,34 @@ const DEFAULT_BANNER = {
   button_url: '/shop'
 }
 
+// Estructura jerárquica de categorías (exactamente como la pediste)
+const CATEGORY_TREE = [
+  {
+    name: 'Baby & Kids',
+    sub: ['Clothing & Accessories', 'Feeding & Nursing', 'Parent & Baby Essentials']
+  },
+  {
+    name: 'Health & Wellness',
+    sub: ['Feminine Care', 'Herbal Teas & Coffee', 'Male Wellness', 'Vitamins & Supplements']
+  },
+  {
+    name: 'Home & Living',
+    sub: ['Appliances', 'Bathroom Accessories', 'General Home Items', 'Kitchen']
+  },
+  {
+    name: 'Jewelry & Accessories',
+    sub: ['Body Jewelry', 'Souvenirs']
+  },
+  {
+    name: 'Party Supplies',
+    sub: ['Decorations', 'Party Bags', 'Party Cups', 'Party Hats', 'Party Plates', 'Party Tissues', 'Table Covers']
+  },
+  {
+    name: 'Stationery & School Supplies',
+    sub: ['Art & Craft Supplies']
+  }
+]
+
 function StarRating({ rating = 0 }) {
   return (
     <div className="flex gap-0.5">
@@ -42,6 +70,59 @@ function SideSection({ title, children, defaultOpen = true }) {
       </button>
       {open && children}
     </div>
+  )
+}
+
+// Componente para renderizar el árbol de categorías con totales acumulados
+function CategoryTree({ tree, selectedCategory, onSelectCategory, getCategoryCount, getSubCategoryNames }) {
+  return (
+    <ul className="space-y-3">
+      {/* Opción "All" para mostrar todos los productos */}
+      <li className="flex items-center justify-between">
+        <button
+          onClick={() => onSelectCategory('All')}
+          className={`text-[16px] text-left transition-colors leading-snug ${selectedCategory === 'All' ? 'text-gray-900 font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
+        >
+          All
+        </button>
+        <span className="text-[14px] text-gray-400">({getCategoryCount('All')})</span>
+      </li>
+
+      {tree.map(cat => {
+        const total = getCategoryCount(cat.name) // ya suma de subcategorías
+        return (
+          <li key={cat.name}>
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => onSelectCategory(cat.name)}
+                className={`text-[16px] text-left transition-colors leading-snug ${selectedCategory === cat.name ? 'text-gray-900 font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                {cat.name}
+              </button>
+              <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                <span className="text-[14px] text-gray-400">({total})</span>
+                <ChevronDown size={14} className="text-gray-400" />
+              </div>
+            </div>
+            {cat.sub && cat.sub.length > 0 && (
+              <ul className="ml-5 mt-2 space-y-2 border-l border-gray-200 pl-3">
+                {cat.sub.map(subcat => (
+                  <li key={subcat} className="flex items-center justify-between">
+                    <button
+                      onClick={() => onSelectCategory(subcat)}
+                      className={`text-[14px] text-left transition-colors ${selectedCategory === subcat ? 'text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-900'}`}
+                    >
+                      {subcat}
+                    </button>
+                    <span className="text-[13px] text-gray-400">({getCategoryCount(subcat)})</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -74,9 +155,51 @@ export default function Shop() {
     }).catch(() => setLoading(false))
   }, [])
 
-  const allCategories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))]
-  const allBrands     = [...new Set(products.map(p => p.brand).filter(Boolean))]
-  const countFor      = cat => cat === 'All' ? products.length : products.filter(p => p.category === cat).length
+  // Devuelve los nombres de todas las subcategorías de una categoría principal
+  const getSubCategoryNames = (parentName) => {
+    const parent = CATEGORY_TREE.find(cat => cat.name === parentName)
+    return parent ? parent.sub : []
+  }
+
+  // Calcula el número de productos para una categoría (principal o sub)
+  const getCategoryCount = (categoryName) => {
+    if (categoryName === 'All') {
+      return products.length
+    }
+    // Primero ver si es una categoría principal
+    const parent = CATEGORY_TREE.find(cat => cat.name === categoryName)
+    if (parent) {
+      // Suma los productos de todas sus subcategorías
+      const subNames = parent.sub
+      let total = 0
+      for (const sub of subNames) {
+        total += products.filter(p => p.category === sub).length
+      }
+      // También incluye productos que tengan exactamente el nombre de la principal (por si acaso)
+      total += products.filter(p => p.category === categoryName).length
+      return total
+    } else {
+      // Es una subcategoría o una categoría sin jerarquía
+      return products.filter(p => p.category === categoryName).length
+    }
+  }
+
+  // Determina si un producto debe mostrarse según la categoría seleccionada
+  const matchesCategory = (productCategory) => {
+    if (selectedCategory === 'All') return true
+    // Ver si la categoría seleccionada es una principal
+    const parent = CATEGORY_TREE.find(cat => cat.name === selectedCategory)
+    if (parent) {
+      // Incluye productos cuyas subcategorías estén en la lista
+      return parent.sub.includes(productCategory) || productCategory === selectedCategory
+    } else {
+      // Es subcategoría o categoría independiente
+      return productCategory === selectedCategory
+    }
+  }
+
+  // Todas las marcas disponibles
+  const allBrands = [...new Set(products.map(p => p.brand).filter(Boolean))]
 
   const toggleBrand = brand => {
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand])
@@ -84,7 +207,7 @@ export default function Shop() {
   }
 
   let filtered = products.filter(p => {
-    const matchCat    = selectedCategory === 'All' || p.category === selectedCategory
+    const matchCat    = matchesCategory(p.category)
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase())
     const matchBrand  = selectedBrands.length === 0 || selectedBrands.includes(p.brand)
     const matchPrice  = (p.price || 0) <= priceMax
@@ -125,21 +248,14 @@ export default function Shop() {
 
         {/* ── SIDEBAR ── */}
         <aside className="w-80 flex-shrink-0">
-          <SideSection title="Categories">
-            <ul className="space-y-3">
-              {allCategories.map(cat => (
-                <li key={cat} className="flex items-center justify-between">
-                  <button
-                    onClick={() => { setSelectedCategory(cat); setCurrentPage(1) }}
-                    className={`text-[16px] text-left transition-colors leading-snug ${selectedCategory === cat ? 'text-gray-900 font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
-                  >{cat}</button>
-                  <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                    <span className="text-[14px] text-gray-400">({countFor(cat)})</span>
-                    {cat !== 'All' && <ChevronDown size={14} className="text-gray-400" />}
-                  </div>
-                </li>
-              ))}
-            </ul>
+          <SideSection title="Categories" defaultOpen={true}>
+            <CategoryTree
+              tree={CATEGORY_TREE}
+              selectedCategory={selectedCategory}
+              onSelectCategory={(cat) => { setSelectedCategory(cat); setCurrentPage(1) }}
+              getCategoryCount={getCategoryCount}
+              getSubCategoryNames={getSubCategoryNames}
+            />
           </SideSection>
 
           <SideSection title="Price">
@@ -263,8 +379,6 @@ export default function Shop() {
             <div className="grid grid-cols-3 gap-5">
               {paginated.map(product => (
                 <div key={product.id} className="group border border-gray-100 bg-white hover:shadow-md transition overflow-hidden cursor-pointer">
-
-                  {/* Contenedor cuadrado — imagen completa + zoom al hover */}
                   <div className="relative overflow-hidden bg-gray-50" style={{ aspectRatio: '1 / 1' }}>
                     <img
                       src={product.image}
@@ -277,7 +391,6 @@ export default function Shop() {
                       <ShoppingCart size={14} /> ADD TO CART
                     </button>
                   </div>
-
                   <div className="p-3">
                     <p className="text-[11px] text-gray-400 uppercase tracking-wide mb-1">{product.category}</p>
                     <h3 className="text-[14px] text-gray-800 leading-snug mb-1.5 line-clamp-2">{product.name}</h3>
