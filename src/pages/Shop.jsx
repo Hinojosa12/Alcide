@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { ChevronDown, Minus, ShoppingCart, LayoutGrid, AlignJustify } from 'lucide-react'
 
@@ -20,7 +21,6 @@ const DEFAULT_BANNER = {
   button_url: '/shop'
 }
 
-// Estructura jerárquica de categorías (exactamente como la pediste)
 const CATEGORY_TREE = [
   {
     name: 'Baby & Kids',
@@ -73,11 +73,9 @@ function SideSection({ title, children, defaultOpen = true }) {
   )
 }
 
-// Componente para renderizar el árbol de categorías con totales acumulados
-function CategoryTree({ tree, selectedCategory, onSelectCategory, getCategoryCount, getSubCategoryNames }) {
+function CategoryTree({ tree, selectedCategory, onSelectCategory, getCategoryCount }) {
   return (
     <ul className="space-y-3">
-      {/* Opción "All" para mostrar todos los productos */}
       <li className="flex items-center justify-between">
         <button
           onClick={() => onSelectCategory('All')}
@@ -87,9 +85,8 @@ function CategoryTree({ tree, selectedCategory, onSelectCategory, getCategoryCou
         </button>
         <span className="text-[14px] text-gray-400">({getCategoryCount('All')})</span>
       </li>
-
       {tree.map(cat => {
-        const total = getCategoryCount(cat.name) // ya suma de subcategorías
+        const total = getCategoryCount(cat.name)
         return (
           <li key={cat.name}>
             <div className="flex items-center justify-between">
@@ -127,18 +124,18 @@ function CategoryTree({ tree, selectedCategory, onSelectCategory, getCategoryCou
 }
 
 export default function Shop() {
-  const [products, setProducts]                 = useState([])
-  const [banner, setBanner]                     = useState(DEFAULT_BANNER)
+  const [products, setProducts] = useState([])
+  const [banner, setBanner] = useState(DEFAULT_BANNER)
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [search, setSearch]                     = useState('')
-  const [loading, setLoading]                   = useState(true)
-  const [selectedBrands, setSelectedBrands]     = useState([])
-  const [maxPrice, setMaxPrice]                 = useState(40000)
-  const [priceMax, setPriceMax]                 = useState(40000)
-  const [sortBy, setSortBy]                     = useState('default')
-  const [pageSize, setPageSize]                 = useState(9)
-  const [currentPage, setCurrentPage]           = useState(1)
-  const [viewMode, setViewMode]                 = useState('grid')
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [selectedBrands, setSelectedBrands] = useState([])
+  const [maxPrice, setMaxPrice] = useState(40000)
+  const [priceMax, setPriceMax] = useState(40000)
+  const [sortBy, setSortBy] = useState('default')
+  const [pageSize, setPageSize] = useState(9)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [viewMode, setViewMode] = useState('grid')
   const { addToCart } = useCart()
 
   useEffect(() => {
@@ -155,50 +152,36 @@ export default function Shop() {
     }).catch(() => setLoading(false))
   }, [])
 
-  // Devuelve los nombres de todas las subcategorías de una categoría principal
   const getSubCategoryNames = (parentName) => {
     const parent = CATEGORY_TREE.find(cat => cat.name === parentName)
     return parent ? parent.sub : []
   }
 
-  // Calcula el número de productos para una categoría (principal o sub)
   const getCategoryCount = (categoryName) => {
-    if (categoryName === 'All') {
-      return products.length
-    }
-    // Primero ver si es una categoría principal
+    if (categoryName === 'All') return products.length
     const parent = CATEGORY_TREE.find(cat => cat.name === categoryName)
     if (parent) {
-      // Suma los productos de todas sus subcategorías
-      const subNames = parent.sub
       let total = 0
-      for (const sub of subNames) {
+      for (const sub of parent.sub) {
         total += products.filter(p => p.category === sub).length
       }
-      // También incluye productos que tengan exactamente el nombre de la principal (por si acaso)
       total += products.filter(p => p.category === categoryName).length
       return total
     } else {
-      // Es una subcategoría o una categoría sin jerarquía
       return products.filter(p => p.category === categoryName).length
     }
   }
 
-  // Determina si un producto debe mostrarse según la categoría seleccionada
   const matchesCategory = (productCategory) => {
     if (selectedCategory === 'All') return true
-    // Ver si la categoría seleccionada es una principal
     const parent = CATEGORY_TREE.find(cat => cat.name === selectedCategory)
     if (parent) {
-      // Incluye productos cuyas subcategorías estén en la lista
       return parent.sub.includes(productCategory) || productCategory === selectedCategory
     } else {
-      // Es subcategoría o categoría independiente
       return productCategory === selectedCategory
     }
   }
 
-  // Todas las marcas disponibles
   const allBrands = [...new Set(products.map(p => p.brand).filter(Boolean))]
 
   const toggleBrand = brand => {
@@ -207,20 +190,20 @@ export default function Shop() {
   }
 
   let filtered = products.filter(p => {
-    const matchCat    = matchesCategory(p.category)
+    const matchCat = matchesCategory(p.category)
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase())
-    const matchBrand  = selectedBrands.length === 0 || selectedBrands.includes(p.brand)
-    const matchPrice  = (p.price || 0) <= priceMax
+    const matchBrand = selectedBrands.length === 0 || selectedBrands.includes(p.brand)
+    const matchPrice = (p.price || 0) <= priceMax
     return matchCat && matchSearch && matchBrand && matchPrice
   })
 
-  if (sortBy === 'price-asc')  filtered = [...filtered].sort((a,b) => (a.price||0)-(b.price||0))
+  if (sortBy === 'price-asc') filtered = [...filtered].sort((a,b) => (a.price||0)-(b.price||0))
   if (sortBy === 'price-desc') filtered = [...filtered].sort((a,b) => (b.price||0)-(a.price||0))
-  if (sortBy === 'name')       filtered = [...filtered].sort((a,b) => a.name.localeCompare(b.name))
+  if (sortBy === 'name') filtered = [...filtered].sort((a,b) => a.name.localeCompare(b.name))
 
   const totalPages = Math.ceil(filtered.length / pageSize)
-  const paginated  = filtered.slice((currentPage-1)*pageSize, currentPage*pageSize)
-  const featured   = products.slice(0, 3)
+  const paginated = filtered.slice((currentPage-1)*pageSize, currentPage*pageSize)
+  const featured = products.slice(0, 3)
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
@@ -234,8 +217,6 @@ export default function Shop() {
 
   return (
     <div className="max-w-screen-xl mx-auto px-16 py-8">
-
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-400 mb-8">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -245,8 +226,6 @@ export default function Shop() {
       </div>
 
       <div className="flex gap-12">
-
-        {/* ── SIDEBAR ── */}
         <aside className="w-80 flex-shrink-0">
           <SideSection title="Categories" defaultOpen={true}>
             <CategoryTree
@@ -254,7 +233,6 @@ export default function Shop() {
               selectedCategory={selectedCategory}
               onSelectCategory={(cat) => { setSelectedCategory(cat); setCurrentPage(1) }}
               getCategoryCount={getCategoryCount}
-              getSubCategoryNames={getSubCategoryNames}
             />
           </SideSection>
 
@@ -317,10 +295,7 @@ export default function Shop() {
           </SideSection>
         </aside>
 
-        {/* ── MAIN ── */}
         <div className="flex-1 min-w-0">
-
-          {/* Banner dinámico */}
           <div className="w-full rounded overflow-hidden mb-6 relative flex items-center px-10 py-8 text-white" style={bannerStyle}>
             <div className="absolute left-20 top-6  w-20 h-20 rounded-full bg-white/10 pointer-events-none" />
             <div className="absolute left-36 top-3  w-14 h-14 rounded-full bg-white/10 pointer-events-none" />
@@ -340,7 +315,6 @@ export default function Shop() {
             </div>
           </div>
 
-          {/* Sort / Show / View */}
           <div className="flex items-center justify-between mb-4 py-2 border-b border-gray-200">
             <div className="flex items-center gap-3 text-[14px] text-gray-600">
               <span className="font-medium">Sort by:</span>
@@ -365,20 +339,18 @@ export default function Shop() {
             </div>
           </div>
 
-          {/* Search */}
           <div className="mb-5">
             <input type="text" placeholder="Search products..." value={search}
               onChange={e => { setSearch(e.target.value); setCurrentPage(1) }}
               className="border border-gray-200 px-4 py-2 text-[14px] w-64 outline-none focus:border-gray-400" />
           </div>
 
-          {/* Products */}
           {paginated.length === 0 ? (
             <p className="text-center text-gray-400 mt-16 text-[15px]">No products found.</p>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-3 gap-5">
               {paginated.map(product => (
-                <div key={product.id} className="group border border-gray-100 bg-white hover:shadow-md transition overflow-hidden cursor-pointer">
+                <Link key={product.id} to={`/product/${product.id}`} className="group border border-gray-100 bg-white hover:shadow-md transition overflow-hidden cursor-pointer block">
                   <div className="relative overflow-hidden bg-gray-50" style={{ aspectRatio: '1 / 1' }}>
                     <img
                       src={product.image}
@@ -386,7 +358,7 @@ export default function Shop() {
                       className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
                     />
                     <button
-                      onClick={() => addToCart(product)}
+                      onClick={(e) => { e.preventDefault(); addToCart(product); }}
                       className="absolute bottom-0 left-0 right-0 bg-blue-600 text-white text-xs font-bold py-2.5 uppercase tracking-wider opacity-0 group-hover:opacity-100 translate-y-full group-hover:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2">
                       <ShoppingCart size={14} /> ADD TO CART
                     </button>
@@ -397,13 +369,13 @@ export default function Shop() {
                     <StarRating rating={0} />
                     {product.price > 0 && <p className="text-[15px] font-bold text-gray-800 mt-1.5">${product.price.toLocaleString()}</p>}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
             <div className="flex flex-col gap-4">
               {paginated.map(product => (
-                <div key={product.id} className="flex gap-5 border border-gray-100 bg-white hover:shadow-md transition p-4">
+                <Link key={product.id} to={`/product/${product.id}`} className="flex gap-5 border border-gray-100 bg-white hover:shadow-md transition p-4">
                   <div className="w-28 h-28 flex-shrink-0 bg-gray-50 overflow-hidden">
                     <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
                   </div>
@@ -412,17 +384,16 @@ export default function Shop() {
                     <h3 className="text-[15px] font-semibold text-gray-800 mb-1">{product.name}</h3>
                     <StarRating rating={0} />
                     {product.price > 0 && <p className="text-[15px] font-bold text-gray-800 mt-1">${product.price.toLocaleString()}</p>}
-                    <button onClick={() => addToCart(product)}
+                    <button onClick={(e) => { e.preventDefault(); addToCart(product); }}
                       className="mt-3 bg-blue-600 text-white text-xs font-bold px-5 py-2 uppercase tracking-wider hover:bg-blue-700 transition flex items-center gap-2">
                       <ShoppingCart size={13} /> ADD TO CART
                     </button>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-200">
               <p className="text-[13px] text-gray-500">

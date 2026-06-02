@@ -3,8 +3,43 @@ const router = express.Router()
 const db = require('../database')
 
 router.get('/', (req, res) => {
-  const products = db.prepare('SELECT * FROM products ORDER BY id DESC').all()
-  res.json(products)
+  const { category, limit } = req.query
+  try {
+    let query = 'SELECT * FROM products'
+    const params = []
+    
+    if (category) {
+      query += ' WHERE category = ?'
+      params.push(category)
+    }
+    
+    query += ' ORDER BY id DESC'
+    
+    if (limit) {
+      query += ' LIMIT ?'
+      params.push(parseInt(limit))
+    }
+    
+    const products = db.prepare(query).all(...params)
+    res.json(products)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: err.message })
+  }
+})
+
+// Obtener un solo producto por ID
+router.get('/:id', (req, res) => {
+  try {
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id)
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' })
+    }
+    res.json(product)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: err.message })
+  }
 })
 
 router.post('/', (req, res) => {

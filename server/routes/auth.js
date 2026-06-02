@@ -6,7 +6,7 @@ const db = require('../database')
 
 const SECRET = process.env.JWT_SECRET || 'caribzoom_secret'
 
-// Registro
+// Registro (asigna rol 'user' por defecto)
 router.post('/register', (req, res) => {
   const { name, email, password } = req.body
   
@@ -15,14 +15,14 @@ router.post('/register', (req, res) => {
 
   const hashed = bcrypt.hashSync(password, 10)
   const result = db.prepare(
-    'INSERT INTO users (name, email, password) VALUES (?, ?, ?)'
-  ).run(name, email, hashed)
+    'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)'
+  ).run(name, email, hashed, 'user')
 
   const token = jwt.sign({ id: result.lastInsertRowid, email }, SECRET, { expiresIn: '7d' })
-  res.json({ token, id: result.lastInsertRowid, name, email })
+  res.json({ token, id: result.lastInsertRowid, name, email, role: 'user' })
 })
 
-// Login
+// Login (ahora devuelve role)
 router.post('/login', (req, res) => {
   const { email, password } = req.body
 
@@ -33,7 +33,8 @@ router.post('/login', (req, res) => {
   if (!valid) return res.status(400).json({ message: 'Contraseña incorrecta' })
 
   const token = jwt.sign({ id: user.id, email }, SECRET, { expiresIn: '7d' })
-  res.json({ token, id: user.id, name: user.name, email: user.email })
+  // 🔽 Única línea cambiada: añadido user.role
+  res.json({ token, id: user.id, name: user.name, email: user.email, role: user.role })
 })
 
 module.exports = router
